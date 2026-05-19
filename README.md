@@ -13,8 +13,6 @@
 - [Stack technique](#stack-technique)
 - [Installation](#installation)
 - [Lancer le projet](#lancer-le-projet)
-- [Répartition des tâches](#répartition-des-tâches)
-- [Roadmap](#roadmap)
 - [Résultats attendus](#résultats-attendus)
 
 ---
@@ -89,6 +87,7 @@ Le système génère des données de position et d'état physiologique synthéti
 ```
 
 ### Architecture physique (sur vos PC)
+### Il faut faire en sorte que l'on puisse tout lancer depuis le même PC (en utilisant des VM ?)
 
 | Machine | Rôle | Module |
 |---|---|---|
@@ -119,7 +118,8 @@ Chaque capteur virtuel publie des trames JSON à 10 Hz :
 
 ---
 
-## Architecture du dépôt #POTENTIELLE
+## Architecture du dépôt
+### (POTENTIELLE et va probablement changer)
 
 ```
 smartpitch/
@@ -172,6 +172,7 @@ smartpitch/
 ---
 
 ## Stack technique
+### (POTENTIELLE et va probablement changer)
 
 | Couche | Technologie | Usage |
 |---|---|---|
@@ -188,6 +189,7 @@ smartpitch/
 ---
 
 ## Installation
+### (POTENTIELLE et va probablement changer)
 
 ### Prérequis
 
@@ -202,7 +204,7 @@ git clone https://github.com/<votre-org>/smartpitch.git
 cd smartpitch
 ```
 
-### Installer les dépendances Python
+### Installer les dépendances Python 
 
 ```bash
 pip install -r requirements.txt
@@ -272,30 +274,6 @@ main                  # Branche stable, merge uniquement après validation
 └── feature/database        # M4
 ```
 
-**Convention de commits :**
-```
-[MODULE] Description courte de la modification
-
-Exemples :
-[SIM] Ajout du bruit gaussien sur les positions GPS
-[MQTT] Configuration du broker avec QoS level 1
-[ML] Implémentation K-Means + silhouette score
-[DASH] Intégration heatmap temps réel via WebSocket
-```
-
----
-
-## Roadmap
-
-| Phase | Semaine | Objectif | Responsable |
-|---|---|---|---|
-| **Phase 0** | S1 | Setup Git, MQTT local, format JSON commun | Tous |
-| **Phase 1** | S2 | Simulation 22 joueurs + MQTT end-to-end fonctionnel | M1 + M2 |
-| **Phase 2** | S3 | Filtre de Kalman + features extraites + BDD SQLite | M2 + M4 |
-| **Phase 3** | S4 | Heatmaps + K-Means + Random Forest + fatigue model | M3 |
-| **Phase 4** | S5 | Dashboard live intégrant toutes les visualisations | M4 + M3 |
-| **Phase 5** | S6 | Tests, performance plots, rapport final, soutenance | Tous |
-
 ---
 
 ## Résultats attendus
@@ -327,17 +305,6 @@ Exemples :
 - Courbe fatigue score vs temps de jeu
 - Courbe MSE du modèle LSTM vs époques
 - Matrice de confusion du classifieur de rôle
-
----
-
-## Contributeurs
-
-| Membre | Rôle |
-|---|---|
-| [Membre 1] | Chef de projet — Simulation Engine |
-| [Membre 2] | Communication IoT — Traitement temps réel |
-| [Membre 3] | Machine Learning — Analytics |
-| [Membre 4] | Dashboard — Base de données |
 
 ---
 
