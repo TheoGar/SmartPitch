@@ -118,7 +118,7 @@ Chaque capteur virtuel publie des trames JSON à 10 Hz :
 ```
 
 ---
-<h1><span style="color:red">Votre grand texte rouge</span></h1>
+# <font color="red">Votre grand texte rouge</font>
 ## Architecture du dépôt
 
 ```
