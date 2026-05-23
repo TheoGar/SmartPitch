@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartPitch — Tableau de bord</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>SmartPitch</h1>
+    <div id="match-info">
+      <span id="match-time">00:00</span>
+      <span id="connection-status" class="status-disconnected">Déconnecté</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="section-field">
+      <h2>Terrain en temps réel</h2>
+      <div class="legend">
+        <span class="legend-dot team-a"></span> Équipe A
+        <span class="legend-dot gk-a"></span> Gardien A
+        <span class="legend-dot team-b"></span> Équipe B
+        <span class="legend-dot gk-b"></span> Gardien B
+      </div>
+      <canvas id="field-canvas" width="840" height="544"></canvas>
+    </section>
+
+    <section class="section-heatmap">
+      <h2>Heatmap</h2>
+      <div id="heatmap-controls">
+        <button class="hm-btn active" data-view="collective">Collective</button>
+        <button class="hm-btn team-a-btn" data-view="team_a">Équipe A</button>
+        <button class="hm-btn team-b-btn" data-view="team_b">Équipe B</button>
+        <select id="heatmap-player-select">
+          <option value="">Joueur…</option>
+        </select>
+      </div>
+      <div id="heatmap-label"></div>
+      <canvas id="heatmap-canvas" width="420" height="272"></canvas>
+    </section>
+
+    <section class="section-stats">
+      <h2>Statistiques joueurs</h2>
+      <table id="player-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Équipe</th>
+            <th>Zone</th>
+            <th>Vitesse (m/s)</th>
+            <th>FC (bpm)</th>
+            <th>Fatigue</th>
+            <th>Distance (m)</th>
+            <th>Alertes</th>
+          </tr>
+        </thead>
+        <tbody id="player-tbody"></tbody>
+      </table>
+    </section>
+
+    <section class="section-charts">
+      <div class="charts-header">
+        <h2>Évolution</h2>
+        <div class="chart-controls">
+          <button class="chart-btn active" data-cmode="teams">Équipes</button>
+          <select id="chart-player-select">
+            <option value="">Joueur…</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="stat-cards">
+        <div class="stat-card a">
+          <div class="sc-label">Équipe A · Vitesse</div>
+          <div class="sc-value" id="sc-speed-a">—</div>
+          <div class="sc-unit">m/s moy.</div>
+        </div>
+        <div class="stat-card a">
+          <div class="sc-label">Équipe A · Fatigue</div>
+          <div class="sc-value" id="sc-fatigue-a">—</div>
+          <div class="sc-unit">% moy.</div>
+        </div>
+        <div class="stat-card b">
+          <div class="sc-label">Équipe B · Vitesse</div>
+          <div class="sc-value" id="sc-speed-b">—</div>
+          <div class="sc-unit">m/s moy.</div>
+        </div>
+        <div class="stat-card b">
+          <div class="sc-label">Équipe B · Fatigue</div>
+          <div class="sc-value" id="sc-fatigue-b">—</div>
+          <div class="sc-unit">% moy.</div>
+        </div>
+      </div>
+
+      <div class="chart-row">
+        <div class="chart-container">
+          <canvas id="speed-chart"></canvas>
+        </div>
+        <div class="chart-container">
+          <canvas id="fatigue-chart"></canvas>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="charts/heatmap.js"></script>
+  <script src="charts/stats_chart.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

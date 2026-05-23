@@ -13,6 +13,7 @@
 - [Stack technique](#stack-technique)
 - [Installation](#installation)
 - [Lancer le projet](#lancer-le-projet)
+- [Docker](#docker)
 - [Résultats attendus](#résultats-attendus)
 
 ---
@@ -21,18 +22,18 @@
 
 **SmartPitch** est une plateforme IoT simulée qui reproduit le comportement complet d'un système de suivi en temps réel de joueurs de football. En l'absence de capteurs physiques (GPS, IMU), toute la chaîne IoT est émulée par logiciel, tournant sur les PC des membres de l'équipe.
 
-Le système génère des données de position et d'état physiologique synthétiques pour **22 joueurs**, les transmet via **MQTT**, les traite en temps réel avec des algorithmes de **Machine Learning**, et les affiche sur un **dashboard interactif** avec heatmaps, statistiques et alertes tactiques.
+Le système génère des données de position et d'état physiologique synthétiques pour **8 à 10 joueurs**, les transmet via **MQTT**, les analyse en temps réel à l'aide de **règles simples basées sur des seuils**, et les affiche sur un **dashboard minimaliste** avec heatmaps, statistiques et alertes temps réel.
 
-> Ce projet valide l'architecture, les flux de données, les algorithmes d'analyse et la faisabilité d'un système IoT football réel, avant déploiement avec du matériel physique.
+> Ce projet valide l'architecture, les flux de données et la faisabilité d'un système IoT football réel, dans un cadre académique, avant déploiement avec du matériel physique.
 
 ---
 
 ## Objectif
 
-- Simuler des capteurs IoT (GPS, IMU, fréquence cardiaque) pour 22 joueurs à **10 Hz**
+- Simuler des capteurs IoT (position X/Y, vitesse, fréquence cardiaque, fatigue) pour **8 à 10 joueurs**
 - Reproduire la chaîne IoT complète : **Sensing → Communication → Computing → Visualization**
-- Générer des **heatmaps**, détecter des schémas tactiques et prédire la fatigue des joueurs
-- Fournir un **dashboard temps réel** exploitable par coaches, analystes et joueurs
+- Générer des **heatmaps**, détecter la fatigue et les joueurs inactifs via des règles à seuils
+- Fournir un **dashboard temps réel** affichant positions, heatmaps, statistiques et alertes
 - Démontrer la faisabilité du système sur données synthétiques avant industrialisation
 
 ---
@@ -45,62 +46,58 @@ Le système génère des données de position et d'état physiologique synthéti
 ┌─────────────────────────────────────────────────────────────────┐
 │  COUCHE 1 — SIMULATION DES CAPTEURS (Sensing virtuel)          │
 │  simulation/simulation_engine.py                                │
-│  → 22 agents joueurs (positions x,y + vitesse + HR simulés)    │
-│  → Bruit gaussien, pertes de paquets, fréquence 10 Hz          │
+│  → 8 à 10 joueurs (positions x,y + vitesse + HR + fatigue)     │
+│  → Déplacements simplifiés et contrôlés                        │
 └────────────────────────────┬────────────────────────────────────┘
                              │ JSON payloads
 ┌────────────────────────────▼────────────────────────────────────┐
 │  COUCHE 2 — COMMUNICATION (Transport MQTT)                      │
 │  communication/mqtt_publisher.py                                │
-│  → Eclipse Mosquitto (broker local)                             │
+│  → Eclipse Mosquitto (broker local, une seule machine)         │
+│  → Plusieurs producteurs MQTT sur un seul PC                   │
 │  → Topics : /match/{id}/player/{id}/position                   │
-│  → Simulation de latence et de pertes réseau                   │
 └────────────────────────────┬────────────────────────────────────┘
                              │ subscribe / stream
 ┌────────────────────────────▼────────────────────────────────────┐
-│  COUCHE 3 — TRAITEMENT TEMPS RÉEL (Edge + Cloud simulé)        │
+│  COUCHE 3 — TRAITEMENT TEMPS RÉEL                               │
 │  processing/data_pipeline.py                                    │
-│  → Filtre de Kalman (lissage des positions)                    │
-│  → Calcul vitesse, accélération, distance cumulée              │
-│  → Détection de sprints (seuil > 7 m/s)                       │
-│  → Score de fatigue (vitesse + HR + charge cumulée)            │
+│  → Calcul vitesse, distance cumulée                            │
+│  → Détection de fatigue et joueurs inactifs (règles à seuils)  │
+│  → Identification des zones chaudes du terrain                 │
 └────────────────────────────┬────────────────────────────────────┘
-                             │ features prêtes
+                             │ données analysées
 ┌────────────────────────────▼────────────────────────────────────┐
-│  COUCHE 4 — ANALYTIQUE & ML                                     │
+│  COUCHE 4 — ANALYTIQUE LÉGÈRE                                   │
 │  analytics/                                                     │
-│  → Heatmap (grille 50×34 sur terrain 105×68 m)                │
-│  → K-Means clustering des zones occupées                       │
-│  → Random Forest : classification du rôle joué                 │
-│  → Régression : indice de fatigue                              │
-│  → SQLite : stockage des données traitées                      │
+│  → Heatmap (zones d'occupation du terrain)                     │
+│  → Alertes : fatigue, inactivité, zones chaudes               │
+│  → Stockage JSON, CSV ou SQLite                                │
 └────────────────────────────┬────────────────────────────────────┘
                              │ données traitées
 ┌────────────────────────────▼────────────────────────────────────┐
-│  COUCHE 5 — VISUALISATION (Dashboard web)                       │
+│  COUCHE 5 — VISUALISATION (Dashboard web minimaliste)           │
 │  dashboard/index.html                                           │
-│  → Terrain 2D avec trajectoires joueurs (Canvas)              │
-│  → Heatmaps interactives (individuelle + équipe)              │
-│  → Graphes : vitesse, fatigue, distance (Chart.js)            │
-│  → Alertes tactiques en temps réel                            │
+│  → Positions des joueurs sur le terrain (Canvas)              │
+│  → Heatmaps (individuelle + équipe)                           │
+│  → Statistiques principales et alertes temps réel             │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### Architecture physique (sur vos PC)
-### Il faut faire en sorte que l'on puisse tout lancer depuis le même PC (en utilisant des VM ?)
+### Architecture physique
 
-| Machine | Rôle | Module |
+> **Tous les modules tournent sur une seule machine** via **Docker Compose**, chaque service dans son propre conteneur isolé communiquant via un réseau interne Docker.
+
+| Conteneur | Rôle | Module |
 |---|---|---|
-| **PC 1** | Moteur de simulation + capteurs virtuels | `simulation/` |
-| **PC 2** | Broker MQTT + traitement temps réel | `communication/` + `processing/` |
-| **PC 3** | Analytique ML + base de données | `analytics/` + `database/` |
-| **PC 4** | Dashboard de visualisation | `dashboard/` |
-
-> **En pratique pour la démo** : tous les modules peuvent tourner sur un seul PC via des terminaux séparés.
+| `simulation` | Moteur de simulation + capteurs virtuels | `simulation/` |
+| `mosquitto` | Broker MQTT | — |
+| `processing` | Traitement temps réel (subscriber) | `communication/` + `processing/` |
+| `analytics` | Analytique légère + stockage | `analytics/` + `database/` |
+| `dashboard` | Dashboard de visualisation | `dashboard/` |
 
 ### Format JSON des données simulées
 
-Chaque capteur virtuel publie des trames JSON à 10 Hz :
+Chaque capteur virtuel publie des trames JSON :
 
 ```json
 {
@@ -110,28 +107,29 @@ Chaque capteur virtuel publie des trames JSON à 10 Hz :
   "x": 42.3,
   "y": 31.7,
   "speed": 5.2,
-  "acceleration": 1.1,
   "heart_rate": 152,
-  "zone": "central_midfield"
+  "fatigue": 0.74
 }
 ```
 
 ---
 
 ## Architecture du dépôt
-### (POTENTIELLE et va probablement changer)
+
+> ⚠️ Architecture potentielle, susceptible d'évoluer au fil du développement.
 
 ```
 smartpitch/
 │
 ├── README.md                        # Ce fichier
 ├── requirements.txt                 # Dépendances Python
+├── docker-compose.yml               # Orchestration des conteneurs
 ├── .gitignore
 │
 ├── simulation/                      # COUCHE 1 — Sensing virtuel
-│   ├── simulation_engine.py         # Moteur principal : 22 joueurs, trajectoires
-│   ├── virtual_sensors.py           # Ajout bruit gaussien + pertes de paquets
-│   └── match_scenarios.py           # Scénarios : match complet, mi-temps, replay
+│   ├── Dockerfile
+│   ├── simulation_engine.py         # Moteur principal : 8-10 joueurs, déplacements simplifiés
+│   └── virtual_sensors.py           # Génération position, vitesse, HR, fatigue
 │
 ├── communication/                   # COUCHE 2 — Transport MQTT
 │   ├── mqtt_publisher.py            # Publie les trames JSON vers le broker
@@ -139,29 +137,26 @@ smartpitch/
 │   └── config_broker.py             # Configuration Eclipse Mosquitto
 │
 ├── processing/                      # COUCHE 3 — Traitement temps réel
-│   ├── kalman_filter.py             # Filtre de Kalman pour lissage positions
-│   ├── feature_extractor.py         # Vitesse, accél, distance, zones
-│   └── data_pipeline.py             # Pipeline complet simulation → features
+│   ├── Dockerfile
+│   ├── feature_extractor.py         # Vitesse, distance, zones
+│   └── data_pipeline.py             # Pipeline complet simulation → analyse
 │
-├── analytics/                       # COUCHE 4 — ML & Analytics
-│   ├── heatmap_generator.py         # Heatmaps individuelle + équipe (numpy)
-│   ├── clustering.py                # K-Means + évaluation silhouette score
-│   ├── fatigue_model.py             # Régression : score de fatigue
-│   ├── role_classifier.py           # Random Forest : rôle du joueur
-│   └── event_detector.py            # Détection sprints + alertes tactiques
+├── analytics/                       # COUCHE 4 — Analytique légère
+│   ├── Dockerfile
+│   ├── heatmap_generator.py         # Heatmaps individuelle + équipe
+│   └── event_detector.py            # Détection fatigue, inactivité, zones chaudes (seuils)
 │
 ├── database/                        # Persistance
-│   ├── models.py                    # Schéma SQLite
-│   └── db_handler.py                # CRUD : insert, query, export CSV
+│   └── db_handler.py                # Stockage JSON, CSV ou SQLite
 │
 ├── dashboard/                       # COUCHE 5 — Visualisation web
+│   ├── Dockerfile
 │   ├── index.html                   # Dashboard principal
 │   ├── style.css
 │   ├── app.js                       # Logique WebSocket temps réel
 │   └── charts/
 │       ├── heatmap.js               # Rendu heatmap Canvas
-│       ├── speed_chart.js           # Graphe vitesse vs temps
-│       └── fatigue_chart.js         # Graphe fatigue vs temps
+│       └── stats_chart.js           # Graphes statistiques principales
 │
 └── tests/                           # Tests unitaires
     ├── test_simulation.py
@@ -172,69 +167,74 @@ smartpitch/
 ---
 
 ## Stack technique
-### (POTENTIELLE et va probablement changer)
+
+> ⚠️ Stack potentielle, susceptible d'évoluer au fil du développement.
 
 | Couche | Technologie | Usage |
 |---|---|---|
-| Simulation | Python + NumPy + SciPy | Génération trajectoires, bruit gaussien |
+| Simulation | Python + NumPy | Génération trajectoires simplifiées |
 | Communication | Eclipse Mosquitto + Paho-MQTT | Broker IoT local, publish/subscribe |
 | Transport dashboard | `websockets` Python | Flux temps réel vers le navigateur |
-| Traitement | FilterPy + Pandas | Filtre de Kalman, manipulation données |
-| Machine Learning | Scikit-learn | K-Means, Random Forest, régression |
-| Visualisation backend | Matplotlib + Seaborn | Génération des heatmaps et plots |
+| Traitement | Pandas | Manipulation et analyse des données |
+| Analytique | Règles à seuils (Python) | Détection fatigue, inactivité, zones chaudes |
 | Dashboard frontend | HTML5 + Chart.js + Canvas API | Interface temps réel sans framework lourd |
-| Base de données | SQLite | Stockage léger, sans serveur, portable |
+| Base de données | JSON / CSV / SQLite | Stockage léger, sans serveur, portable |
+| Conteneurisation | Docker + Docker Compose | Isolation des services, déploiement en une commande |
 | Versioning | Git + GitHub | Collaboration à 4, branches par module |
 
 ---
 
 ## Installation
-### (POTENTIELLE et va probablement changer)
+
+> ⚠️ Instructions potentielles, susceptibles d'évoluer au fil du développement.
 
 ### Prérequis
 
-- Python 3.10+
-- Eclipse Mosquitto installé ([mosquitto.org](https://mosquitto.org/download/))
+- Docker + Docker Compose
 - Git
 
 ### Cloner le dépôt
 
 ```bash
-git clone https://github.com/<votre-org>/smartpitch.git
-cd smartpitch
-```
-
-### Installer les dépendances Python 
-
-```bash
-pip install -r requirements.txt
-```
-
-**Contenu de `requirements.txt` :**
-```
-numpy
-scipy
-pandas
-matplotlib
-seaborn
-scikit-learn
-filterpy
-paho-mqtt
-websockets
-```
-
-### Configurer le broker MQTT
-
-```bash
-# Démarrer Mosquitto en local (port 1883 par défaut)
-mosquitto -v
+git clone https://github.com/TheoGar/SmartPitch.git
+cd SmartPitch
 ```
 
 ---
 
 ## Lancer le projet
 
-Ouvrir **4 terminaux** (ou 4 machines) et lancer dans l'ordre :
+### Avec Docker Compose (recommandé)
+
+Une seule commande lance l'ensemble des services :
+
+```bash
+docker-compose up --build
+```
+
+Les services démarrent dans l'ordre suivant :
+1. `mosquitto` — broker MQTT
+2. `processing` — subscriber + traitement temps réel
+3. `analytics` — analytique + stockage
+4. `simulation` — capteurs virtuels (publishers)
+5. `dashboard` — interface web
+
+Ouvrir le dashboard sur **http://localhost:8080**
+
+Pour arrêter :
+```bash
+docker-compose down
+```
+
+### Sans Docker (terminaux séparés)
+
+Si Docker n'est pas disponible, installer Python 3.10+ et Eclipse Mosquitto, puis :
+
+```bash
+pip install -r requirements.txt
+```
+
+Ouvrir **4 terminaux** sur la même machine et lancer dans l'ordre :
 
 ```bash
 # Terminal 1 — Démarrer le broker MQTT
@@ -244,12 +244,53 @@ mosquitto -v
 python communication/mqtt_subscriber.py
 
 # Terminal 3 — Lancer la simulation (publisher)
-python simulation/simulation_engine.py --players 22 --duration 90 --scenario full_match
+python simulation/simulation_engine.py --players 10 --duration 90
 
 # Terminal 4 — Lancer le serveur du dashboard
 python dashboard/server.py
 # Ouvrir http://localhost:8080 dans le navigateur
 ```
+
+---
+
+## Docker
+
+### Structure des conteneurs
+
+```yaml
+# docker-compose.yml (aperçu)
+services:
+  mosquitto:
+    image: eclipse-mosquitto
+    ports: ["1883:1883"]
+
+  simulation:
+    build: ./simulation
+    depends_on: [mosquitto]
+    environment:
+      - MQTT_BROKER=mosquitto
+      - PLAYERS=10
+
+  processing:
+    build: ./processing
+    depends_on: [mosquitto]
+    environment:
+      - MQTT_BROKER=mosquitto
+
+  analytics:
+    build: ./analytics
+    depends_on: [processing]
+    volumes: ["./data:/app/data"]
+
+  dashboard:
+    build: ./dashboard
+    depends_on: [processing]
+    ports: ["8080:8080"]
+```
+
+### Réseau interne
+
+Tous les conteneurs communiquent via le réseau Docker interne. Le broker Mosquitto est accessible depuis les autres conteneurs via le hostname `mosquitto` (port 1883). Seul le dashboard est exposé à l'extérieur (port 8080).
 
 ---
 
@@ -259,8 +300,8 @@ python dashboard/server.py
 |---|---|---|
 | **M1** — Chef de projet | Simulation Engine + coordination | `simulation/` |
 | **M2** — IoT & Processing | Communication MQTT + traitement temps réel | `communication/` + `processing/` |
-| **M3** — Data Science | Machine Learning + analytics + plots | `analytics/` |
-| **M4** — Full Stack | Dashboard web + base de données | `dashboard/` + `database/` |
+| **M3** — Data Science | Analytique légère + stockage | `analytics/` + `database/` |
+| **M4** — Full Stack | Dashboard web | `dashboard/` |
 
 ### Branches Git
 
@@ -282,29 +323,26 @@ main                  # Branche stable, merge uniquement après validation
 
 | Métrique | Valeur cible |
 |---|---|
-| Fréquence de simulation | 10 Hz (200 msg/s pour 22 joueurs) |
+| Joueurs simulés en parallèle | 8 à 10 |
 | Latence bout-en-bout | < 1 seconde |
-| Joueurs simulés en parallèle | 22 (11 par équipe) |
-| Durée de match simulée | 90 minutes (avec replay possible) |
+| Durée de match simulée | 90 minutes |
 | Taux de paquets reçus | Configurable : 90%, 95%, 100% |
 
-### Métriques ML
+### Analyses livrées
 
-| Modèle | Métrique | Valeur attendue |
-|---|---|---|
-| K-Means (zones) | Silhouette Score | > 0.65 |
-| Random Forest (rôle) | Accuracy | > 90% |
-| Régression (fatigue) | RMSE | < 5 points |
+| Analyse | Méthode |
+|---|---|
+| Détection de fatigue | Règle à seuil sur vitesse + HR |
+| Détection joueur inactif | Règle à seuil sur distance parcourue |
+| Zones chaudes du terrain | Accumulation de positions sur grille |
 
 ### Visualisations livrées
 
-- Heatmap individuelle par joueur (grille 50×34)
+- Positions des joueurs en temps réel sur le terrain
+- Heatmap individuelle par joueur
 - Heatmap collective de l'équipe
-- Graphe vitesse instantanée vs temps (avec détection de sprints)
-- Graphe distance cumulée vs temps
-- Courbe fatigue score vs temps de jeu
-- Courbe MSE du modèle LSTM vs époques
-- Matrice de confusion du classifieur de rôle
+- Statistiques principales (vitesse, distance, fatigue)
+- Alertes temps réel (fatigue, inactivité)
 
 ---
 
