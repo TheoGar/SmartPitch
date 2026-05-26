@@ -55,6 +55,10 @@ services:
       - MQTT_BROKER=mosquitto
       - MQTT_PORT=1883
       - MATCH_ID=match_001
+      - FATIGUE_THRESHOLD=0.5
+      - SPRINT_SPEED=6.0
+      - HIGH_HR_THRESHOLD=150
+      - INACTIVITY_DISTANCE=8.0
     networks:
       - smartpitch-net
     restart: unless-stopped
@@ -94,6 +98,10 @@ services:
       - MQTT_BROKER=mosquitto
       - MQTT_PORT=1883
       - MATCH_ID=match_001
+      - FATIGUE_THRESHOLD=0.5
+      - SPRINT_SPEED=6.0
+      - HIGH_HR_THRESHOLD=150
+      - INACTIVITY_DISTANCE=8.0
     networks:
       - smartpitch-net
     restart: unless-stopped

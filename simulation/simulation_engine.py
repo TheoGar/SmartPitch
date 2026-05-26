@@ -19,9 +19,9 @@ MATCH_ID = os.getenv("MATCH_ID", "match_001")
 class PlayerState:
     """Holds and updates the simulated state of a single player."""
 
-    BASE_SPEED_MS = 3.5
+    BASE_SPEED_MS = 5.0
     MAX_SPEED_MS = 9.0
-    FATIGUE_RATE = 0.0001
+    FATIGUE_RATE = 0.005
     HR_BASE = 70
     HR_MAX = 200
 
@@ -76,7 +76,7 @@ class PlayerState:
         angle = random.uniform(0, 2 * np.pi)
         self.vx = np.cos(angle)
         self.vy = np.sin(angle)
-        if random.random() < 0.15:
+        if random.random() < 0.25:
             self._sprint_timer = random.uniform(1.5, 4.0)
 
     @property
